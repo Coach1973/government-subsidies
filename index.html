@@ -739,8 +739,8 @@
                 <div class="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                     <i class="fa-solid fa-check-circle text-emerald-600 text-5xl success-check"></i>
                 </div>
-                <h3 class="text-2xl font-bold tracking-tight">報名資料已準備完成！</h3>
-                <p class="text-slate-600 text-sm mt-2">請點擊下方按鈕，將您的報名資訊傳送給大樹教育官方 Line，我們將盡速為您確認席次。</p>
+                <h3 class="text-2xl font-bold tracking-tight">報名成功！</h3>
+                <p class="text-slate-600 text-sm mt-2">您的報名資料已自動傳送給大樹教育，我們將盡速與您確認席次與繳費方式。</p>
             </div>
             
             <!-- LINE Action Area -->
@@ -944,6 +944,19 @@
                 session: sessions[selectedSessionId]
             };
             
+            // 自動傳送報名資料到教練 LINE（背景執行，用戶無感）
+            fetch('https://sme-register-fn.netlify.app/.netlify/functions/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    session: sessions[selectedSessionId].date + ' ' + sessions[selectedSessionId].venue,
+                    name: name,
+                    company: company,
+                    phone: phone,
+                    email: email
+                })
+            }).catch(() => {});
+            
             // Simulate processing
             const submitBtn = form.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
@@ -1020,26 +1033,8 @@ Email：${r.email || '未填寫'}
         // Open LINE and prepare message
         function sendToLine() {
             const msg = generateLineMessage();
-            
-            // Try to copy first
-            navigator.clipboard.writeText(msg).catch(() => {});
-            
-            // Open LINE official account
-            window.open(LINE_REGISTRATION_URL, '_blank');
-            
-            // Show helpful toast
-            setTimeout(() => {
-                const toast = document.createElement('div');
-                toast.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-emerald-600 text-white text-xs px-5 py-3 rounded-3xl flex items-center gap-x-2 shadow-xl z-[200]';
-                toast.innerHTML = `<span>已為您開啟 Line 聊天視窗，請直接貼上剛剛複製的報名資料</span>`;
-                document.body.appendChild(toast);
-                
-                setTimeout(() => {
-                    toast.style.transition = 'all 0.3s ease';
-                    toast.style.opacity = '0';
-                    setTimeout(() => toast.remove(), 250);
-                }, 3800);
-            }, 800);
+            const lineUrl = 'https://line.me/R/oaMessage/@qaw8118h/?text=' + encodeURIComponent(msg);
+            window.open(lineUrl, '_blank');
         }
         
         // Copy Line ID
